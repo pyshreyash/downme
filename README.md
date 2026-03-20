@@ -18,24 +18,24 @@ sequenceDiagram
     participant B as Blob Storage
 
     U->>A: JWT Authentication
-    A->>D: validate
-    D-->>A: OK
+
 
     A->>D: check purchase
     D-->>A: OK
-
+    A->>D: fetch manifest
+    D-->>A: manifest
     A->>A: generate SAS token
-
-    A->>B: fetch manifest
-    B-->>A: manifest
 
     A-->>U: manifest + SAS token
 
     par Parallel chunk downloads
-        U->>B: download chunk (SAS)
-        U->>B: download chunk (SAS)
-        U->>B: download chunk (SAS)
+        U->>B: request chunk (SAS)
+        B-->>U: download chunk
+        U->>B: ...
+    
     end
+
+    U->>U: verify download and install
 ```
 
 ### Publisher Flows
@@ -45,12 +45,12 @@ sequenceDiagram
 
     participant P as Publisher CLI
     participant A as API Service
-    participant B as Blob Storage
     participant D as DB
+    participant B as Blob Storage
+    
 
     P->>A: JWT Authentication
-    A->>B: validate
-    B-->>A: OK
+
 
     A->>A: create upload session
     A->>A: generate SAS token
@@ -65,7 +65,7 @@ sequenceDiagram
 
     P->>A: commit
 
-    A->>B: list/verify blobs
+    A->>B: verify upload
     B-->>A: OK
 
     A->>A: build manifest
