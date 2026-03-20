@@ -5,32 +5,73 @@ Trying to build a Steam-like game distribution service/platform, will use CLI fo
 Initial design idea -
 <img width="1525" height="705" alt="image" src="https://github.com/user-attachments/assets/e7c504e7-18ee-4150-93c2-7263fc92d9cd" />
 
-A little detailed but still messy - 
+Let's separate - User and Publisher to get a better picture
+### User Flows
+- Game purchase flow is easy, user buys we write the successful purchase to db (not going to implement this)
+- Game download flow is a task, we assume user has already purchased some games and its already updated in db
 ```mermaid
-flowchart TD
+sequenceDiagram
 
-    user[User]
-    publisher[Publisher]
+    participant U as User CLI
+    participant A as API Service
+    participant D as DB
+    participant B as Blob Storage
 
-    cli_user[User CLI]
-    cli_pub[Publisher CLI]
+    U->>A: JWT Authentication
+    A->>D: validate
+    D-->>A: OK
 
-    api[API Service - Auth, Entitlement, Manifest, SAS Generator]
-    db[(Database: Users, Purchases, Games, Versions, Manifests)]
-    blob[(Azure Blob Storage: Game Chunks)]
+    A->>D: check purchase
+    D-->>A: OK
 
-    user --> cli_user
-    cli_user -->|Request manifest + SAS| api
-    api -->|Check entitlement| db
-    api -->|Return manifest + SAS| cli_user
-    cli_user -->|Download chunks via SAS| blob
+    A->>A: generate SAS token
 
-    publisher --> cli_pub
-    cli_pub -->|Auth + upload request| api
-    api -->|Return SAS| cli_pub
-    cli_pub -->|Upload chunks via SAS| blob
-    cli_pub -->|Commit upload| api
+    A->>B: fetch manifest
+    B-->>A: manifest
 
-    api -->|Validate chunks| blob
-    api -->|Store manifest + metadata| db
+    A-->>U: manifest + SAS token
+
+    par Parallel chunk downloads
+        U->>B: download chunk (SAS)
+        U->>B: download chunk (SAS)
+        U->>B: download chunk (SAS)
+    end
+```
+
+### Publisher Flows
+- The publisher uploads game on the platform
+```mermaid
+sequenceDiagram
+
+    participant P as Publisher CLI
+    participant A as API Service
+    participant B as Blob Storage
+    participant D as DB
+
+    P->>A: JWT Authentication
+    A->>B: validate
+    B-->>A: OK
+
+    A->>A: create upload session
+    A->>A: generate SAS token
+
+    A-->>P: SAS token
+
+    par Parallel chunk uploads
+        P->>B: upload chunk (SAS)
+        P->>B: upload chunk (SAS)
+        P->>B: upload chunk (SAS)
+    end
+
+    P->>A: commit
+
+    A->>B: list/verify blobs
+    B-->>A: OK
+
+    A->>A: build manifest
+
+    A->>D: store manifest
+    D-->>A: OK
+
+    A-->>P: success
 ```
