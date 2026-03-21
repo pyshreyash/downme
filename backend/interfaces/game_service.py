@@ -1,9 +1,11 @@
 from typing import Annotated
-from ..db import get_db
-from ..models import Game, GameVersion, Manifest, Purchase, User
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, UTC
+
+from backend.db import get_db
+from backend.models import Game, GameVersion, Manifest, Purchase
+from backend.config import settings
 
 class GameService:
     @staticmethod
@@ -51,12 +53,12 @@ class GameService:
         return [{"name": n, "version": v} for n, v in lastest_by_game.items()]
     
 
-    def build_download_payload(self, manifest_json: dict, sas_token: str):
+    def build_download_payload(self, manifest_json: dict, sas_token: str, container_name: str):
         return {
             "manifest": manifest_json,
             "sas_token": sas_token,
             "expires_at": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
-            "blob_base_url": "BLOB_BASE_URL_PLACEHOLDER"}
+            "blob_base_url": f"{settings.azure_blob_endpoint}/{container_name}"}
     
 
     def build_refresh_payload(self, sas_token: str):
@@ -65,12 +67,11 @@ class GameService:
             "expires_at": (datetime.now(UTC) + timedelta(hours=1)).isoformat()}
     
 
-    def build_upload_init_payload(self, game_name: str, version: str, sas_token: str):
+    def build_upload_init_payload(self, container_name: str, sas_token: str):
         return {
-            "container": "CONTAINER_NAME_PLACEHOLDER",
-            "blob_base_url": "BLOB_BASE_URL_PLACEHOLDER",
-            "path_prefix": f"{game_name}/{version}/chunks/",
-            "sas_token": sas_token, 
+            "container": container_name,
+            "blob_base_url": f"{settings.azure_blob_endpoint}/{container_name}",
+            "sas_token": sas_token,
             "expires_at": (datetime.now(UTC) + timedelta(hours=1)).isoformat()
         }
     

@@ -1,10 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends, status
-import models
-from db import SessionLocal, engine
-from typing import Annotated
-from sqlalchemy.orm import Session
 
-from .services import auth, publisher, sas_refresh, user
+import backend.models as models
+from backend.db import SessionLocal, engine
+from backend.services import auth, publisher, sas_refresh, user
 
 
 app = FastAPI()

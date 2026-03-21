@@ -4,19 +4,33 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, UTC
 
-from ..db import get_db
-from ..models import Game, GameVersion, Manifest
+from backend.db import get_db
+from backend.models import Game, GameVersion, Manifest
+from backend.interfaces.blob_storage import BlobStorageService
 
 class UploadService:
-    def ensure_publisher(self, user_id: int, game_name: str, db: Annotated[Session, Depends(get_db)]) -> Game:
-        game = db.query(Game).filter(Game.name==game_name).first()
-        if not game:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+    def __init__(self, db: Session, blob_storage_service: BlobStorageService) -> None:
+        self.db = db
+        self.blob_storage_service = blob_storage_service
+
+    def init_game(self, game_name: str, version: str, user_id: int) -> Game:
+        game = self.db.query(Game).filter(Game.name==game_name).first()
+        if game:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Game aldready exists")
         
-        if game.publisher_id != user_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is not the publisher of this game")
-        
-        return game
+        new_game = Game(name=game_name, publisher_id=user_id)
+        self.db.add(new_game)
+        self.db.flush() # to get game_id before commit
+
+        new_game_version = GameVersion(game_id=new_game.game_id, version=version)
+        self.db.add(new_game_version)
+        self.db.commit()
+        self.db.refresh(new_game_version)
+        self.db.refresh(new_game)
+
+        self.blob_storage_service.create_upload_container(game_name)
+
+        return new_game
 
     def ensure_commit_allowed(self, user_id: int, game_name: str, db: Annotated[Session, Depends(get_db)]) -> Game:
         game = db.query(Game).filter(Game.name==game_name).first()

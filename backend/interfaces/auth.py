@@ -1,35 +1,35 @@
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordBearer
+
 from passlib.context import CryptContext
 from typing import Annotated
 from sqlalchemy.orm import Session
 
-from ..models import User
-from ..schemas import LoginResponse, UserAuthority
-from ..db import get_db
+from backend.models import User
+from backend.schemas import LoginResponse, UserAuthority
+from backend.db import get_db
 
 
 
 
 bcrypt_context = CryptContext(schemes=['argon2'], deprecated='auto')
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+
 
 class JWTAuthManager:
-    def __init__(self, secret_key: str, algorithm: str, session_timeout: timedelta):
+    def __init__(self, secret_key: str, algorithm: str, session_timeout: timedelta, db: Session):
         self.secret_key = secret_key
         self.algorithm = algorithm
         self.session_timeout = session_timeout
-        self.db: Annotated[Session, Depends(get_db)] = Depends(get_db)
-    
+        self.db = db
+
     def create_JWT(self, user_id: int):
         payload = {'id': user_id, 'ttl': (self.session_timeout+datetime.now()).isoformat()}
         payload.update({})
         return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
 
     
-    def token_to_user(self, token: Annotated[str, Depends(oauth2_bearer)]) -> UserAuthority:
+    def token_to_user(self, token: str) -> UserAuthority:
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             user_id = payload.get('id')
@@ -47,9 +47,9 @@ class JWTAuthManager:
 
 
 class AuthManager:
-    def __init__(self, jwt_manager: JWTAuthManager):
+    def __init__(self, jwt_manager: JWTAuthManager, db: Session):
         self.jwt_manager = jwt_manager
-        self.db: Annotated[Session, Depends(get_db)] = Depends(get_db)
+        self.db = db
 
     def login(self, username: str, password:str) -> LoginResponse:
         user = self.db.query(User).filter(User.username==username).first()
