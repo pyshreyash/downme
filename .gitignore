@@ -1,0 +1,5 @@
+dme/
+.env
+backend/downme.db
+backend/static
+backend/__pycache__/
