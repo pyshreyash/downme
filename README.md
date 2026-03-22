@@ -1,4 +1,4 @@
-# Game Distribution Service - donwme
+# Game Distribution Service - downme
 
 ## Introduction
 Trying to build a Steam-like game distribution service/platform, will use CLI for front-end interaction allowing for user and game publishers to upload and download games 
