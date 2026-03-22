@@ -1,6 +1,5 @@
 dme/
 .env
-backend/downme.db
 backend/static
 backend/__pycache__/
 __azurite_db_blob__.json

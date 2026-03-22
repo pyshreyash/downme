@@ -15,7 +15,7 @@ def upload_init(payload: UploadInitRequest, current_user: UserAuthority = Depend
     #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only publisher can upload")
     
     created_game = upload_service.init_game(payload.game_name, payload.version, current_user.user_id)
-    container_name, sas = blob_storage_service.generate_upload_sas(created_game.name)
+    sas, container_name = blob_storage_service.generate_upload_sas(created_game.name)
 
     return game_service.build_upload_payload(container_name, sas)
 
