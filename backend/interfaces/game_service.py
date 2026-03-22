@@ -67,10 +67,9 @@ class GameService:
             "expires_at": (datetime.now(UTC) + timedelta(hours=1)).isoformat()}
     
 
-    def build_upload_init_payload(self, container_name: str, sas_token: str):
+    def build_upload_payload(self, container_name: str, sas_token: str):
         return {
-            "container": container_name,
-            "blob_base_url": f"{settings.azure_blob_endpoint}/{container_name}",
+            "container_base_url": f"{settings.azure_blob_endpoint}/{container_name}",
             "sas_token": sas_token,
             "expires_at": (datetime.now(UTC) + timedelta(hours=1)).isoformat()
         }
