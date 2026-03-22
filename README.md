@@ -78,7 +78,9 @@ sequenceDiagram
     A-->>P: success
 ```
 
-## Additional details - *AI Generated*
+*Everything below is AI generated - I'm pretty lazy at documentation* :wink:
+
+## Additional details
 
 `downme` is a local prototype of a game distribution system with:
 
