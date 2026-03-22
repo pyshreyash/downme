@@ -40,6 +40,9 @@ class Purchase(Base):
 class Manifest(Base):
     __tablename__ = "manifests"
     manifest_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    game_id: Mapped[int] = mapped_column(Integer, ForeignKey("games.game_id"), nullable=False)
     version_id: Mapped[int] = mapped_column(Integer, ForeignKey("game_versions.version_id"), nullable=False, unique=True)
     manifest_json: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[str] = mapped_column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
+
+    __table_args__ = (UniqueConstraint("game_id", "version_id", name="uq_manifest"),)

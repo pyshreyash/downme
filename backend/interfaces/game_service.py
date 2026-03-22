@@ -55,7 +55,8 @@ class GameService:
 
     def build_download_payload(self, manifest_json: dict, sas_token: str, container_name: str):
         return {
-            "manifest": manifest_json,
+            "blob_prefix": manifest_json['prefix'],
+            "blob_size": manifest_json['size'],
             "sas_token": sas_token,
             "expires_at": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
             "blob_base_url": f"{settings.azure_blob_endpoint}/{container_name}"}

@@ -38,9 +38,6 @@ def download_game(game_name: str, current_user: UserAuthority = Depends(get_user
     manifest_json = json.loads(manifest.manifest_json)
     container_name = blob_storage_service.game_container_name(game_name)
     
-    sas = (
-        blob_storage_service.generate_download_sas(game_name)
-        if manifest_json["chunks"] else ""
-    )
+    sas = blob_storage_service.generate_download_sas(game_name)
     
     return game_service.build_download_payload(manifest_json, sas, container_name)

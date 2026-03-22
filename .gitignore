@@ -5,3 +5,5 @@ backend/static
 backend/__pycache__/
 __azurite_db_blob__.json
 __azurite_db_blob_extent__.json
+local_test_blob.py
+local_download_test.py

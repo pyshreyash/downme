@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, UTC
 from azure.storage.blob import ContainerSasPermissions, BlobServiceClient, generate_container_sas
-from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from fastapi import HTTPException, status
 
 from backend.config import settings
 
@@ -23,7 +24,8 @@ class BlobStorageService:
             container_name=container_name,
             account_key=settings.azure_account_key,
             permission=ContainerSasPermissions(read=True, list=True),
-            expiry=datetime.now(UTC) + timedelta(seconds=settings.download_sas_minutes))
+            expiry=datetime.now(UTC) + timedelta(seconds=settings.download_sas_minutes),
+            version="2023-11-03")
         
         return sas_token
     
@@ -45,3 +47,14 @@ class BlobStorageService:
             expiry=datetime.now(UTC) + timedelta(seconds=settings.upload_sas_minutes))
         
         return sas_token, container_name
+    
+    def fetch_container_client(self, game_name: str):
+        container_name = self.game_container_name(game_name)
+        
+        try:
+            container_client = self.blob_service_client.get_container_client(container_name)
+            container_client.get_container_properties()
+        except ResourceNotFoundError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Container '{container_name}' does not exist.")
+        
+        return container_client
